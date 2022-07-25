@@ -43,5 +43,8 @@ class MainActivity : AppCompatActivity() {
                 jobScheduler.enqueue(jobInfo, jobWorkItem)
             }
         }
+        binding.jobIntentService.setOnClickListener {
+            MyJobIntentService.enqueue(this, page++)
+        }
     }
 }
