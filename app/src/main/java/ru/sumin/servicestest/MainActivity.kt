@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
         override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
             val binder = (p1 as? MyForegroundService.LocalBinder) ?: return
             val service = binder.getService()
-            service.onProgressChanged = { progress ->
+            service.onProgressChangedListener = { progress ->
                 binding.progressBarLoading.progress = progress
             }
         }

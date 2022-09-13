@@ -14,7 +14,7 @@ import kotlinx.coroutines.*
 
 class MyForegroundService : Service() {
 
-    var onProgressChanged: ((Int) -> Unit)? = null
+    var onProgressChangedListener: ((Int) -> Unit)? = null
 
     private val notificationManager by lazy {
         getSystemService(NOTIFICATION_SERVICE) as NotificationManager
@@ -40,7 +40,7 @@ class MyForegroundService : Service() {
                 delay(1000)
                 val notification = notificationBuilder.setProgress(100, i, false).build()
                 notificationManager.notify(NOTIFICATION_ID,notification)
-                onProgressChanged?.invoke(i)
+                onProgressChangedListener?.invoke(i)
                 log("Timer: $i")
             }
             stopSelf()
