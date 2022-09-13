@@ -1,11 +1,11 @@
 package ru.sumin.servicestest
 
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
@@ -14,20 +14,33 @@ import kotlinx.coroutines.*
 
 class MyForegroundService : Service() {
 
+    var onProgressChanged: ((Int) -> Unit)? = null
+
+    private val notificationManager by lazy {
+        getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+    }
+
     private val scope = CoroutineScope(Dispatchers.Main)
+
+    private val notificationBuilder by lazy {
+        createNotificationBuilder()
+    }
 
     override fun onCreate() {
         super.onCreate()
         log("onCreate")
         createNotificationChannel()
-        startForeground(NOTIFICATION_ID, createNotification())
+        startForeground(NOTIFICATION_ID, notificationBuilder.build())
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         scope.launch {
             log("onStartCommand")
-            for (i in 0..100) {
+            for (i in 0..100 step 5) {
                 delay(1000)
+                val notification = notificationBuilder.setProgress(100, i, false).build()
+                notificationManager.notify(NOTIFICATION_ID,notification)
+                onProgressChanged?.invoke(i)
                 log("Timer: $i")
             }
             stopSelf()
@@ -41,12 +54,16 @@ class MyForegroundService : Service() {
         scope.cancel()
     }
 
-    override fun onBind(p0: Intent?): IBinder? {
-        TODO("Not yet implemented")
+    override fun onBind(p0: Intent?): IBinder {
+        return LocalBinder()
     }
 
     private fun log(msg: String) {
         Log.d("SERVICE_TAG", "MyForegroundService: $msg")
+    }
+
+    inner class  LocalBinder: Binder() {
+        fun getService() = this@MyForegroundService
     }
 
     companion object {
@@ -61,7 +78,7 @@ class MyForegroundService : Service() {
     }
 
     private fun createNotificationChannel() {
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationChannel = NotificationChannel(
                 CHANNEL_ID,
@@ -72,9 +89,10 @@ class MyForegroundService : Service() {
         }
     }
 
-    private fun createNotification() = NotificationCompat.Builder(this, CHANNEL_ID)
+    private fun createNotificationBuilder() = NotificationCompat.Builder(this, CHANNEL_ID)
         .setContentTitle("Title")
         .setContentText("Text")
         .setSmallIcon(R.drawable.ic_launcher_background)
-        .build()
+        .setProgress(100, 0, false)
+        .setOnlyAlertOnce(true)
 }
